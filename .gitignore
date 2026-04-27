@@ -16,6 +16,9 @@ data/raw/Online Retail.xlsx
 data/Online Retail.xlsx
 *.xlsx
 
+# Large derived dataset (49 MB; regenerable by running analysis.ipynb)
+data/processed/online_retail_clean.csv
+
 # Claude Code
 .claude/
 .claude.json

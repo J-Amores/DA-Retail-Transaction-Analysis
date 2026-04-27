@@ -1,0 +1,179 @@
+{
+  "dataset": {
+    "raw_rows": 541909,
+    "cleaned_rows": 508937,
+    "customers": 4330,
+    "analysis_window_start": "2010-12-01",
+    "analysis_window_end": "2011-11-30",
+    "currency": "GBP"
+  },
+  "cleaning": {
+    "01_trim_period": {
+      "rows_before": 541909,
+      "rows_after": 516384,
+      "note": "2010-12-01 \u2192 2011-11-30"
+    },
+    "02_drop_unitprice_le_0": {
+      "rows_before": 516384,
+      "rows_after": 513921,
+      "note": ""
+    },
+    "03_drop_exact_duplicates": {
+      "rows_before": 513921,
+      "rows_after": 508937,
+      "note": ""
+    },
+    "04_flag_cancellations": {
+      "rows_before": 508937,
+      "rows_after": 508937,
+      "note": "8,892 kept and netted (per spec)"
+    },
+    "05_drop_missing_customer": {
+      "rows_before": 508937,
+      "rows_after": 384182,
+      "note": "for customer-level analyses"
+    },
+    "06_non_product_codes": {
+      "rows_before": 508937,
+      "rows_after": 508937,
+      "note": "2,614 fee/postage/gift rows kept (no product-level analysis in scope)"
+    },
+    "07_drop_net_negative_customers": {
+      "rows_before": 4330,
+      "rows_after": 4279,
+      "note": "customers with net Monetary <= 0 after netting cancellations"
+    }
+  },
+  "kpis": {
+    "total_revenue_gbp": 9315430.01,
+    "total_revenue_customer_attributed_gbp": 7936979.99,
+    "aov_gbp": 447.05,
+    "total_customers": 4330,
+    "total_invoices_customer_attributed": 17754,
+    "repeat_purchase_rate": 0.6441,
+    "repeat_customer_count": 2756
+  },
+  "segments": {
+    "Champions": {
+      "revenue_gbp": 3565786.63,
+      "revenue_share_pct": 44.85,
+      "customers": 511
+    },
+    "Loyal Customers": {
+      "revenue_gbp": 2085510.5,
+      "revenue_share_pct": 26.23,
+      "customers": 771
+    },
+    "Lost": {
+      "revenue_gbp": 1263590.52,
+      "revenue_share_pct": 15.89,
+      "customers": 1042
+    },
+    "At Risk": {
+      "revenue_gbp": 370280.08,
+      "revenue_share_pct": 4.66,
+      "customers": 164
+    },
+    "Hibernating": {
+      "revenue_gbp": 230360.55,
+      "revenue_share_pct": 2.9,
+      "customers": 931
+    },
+    "About to Sleep": {
+      "revenue_gbp": 109668.55,
+      "revenue_share_pct": 1.38,
+      "customers": 139
+    },
+    "Cannot Lose Them": {
+      "revenue_gbp": 93819.71,
+      "revenue_share_pct": 1.18,
+      "customers": 38
+    },
+    "Need Attention": {
+      "revenue_gbp": 78511.77,
+      "revenue_share_pct": 0.99,
+      "customers": 279
+    },
+    "Potential Loyalists": {
+      "revenue_gbp": 78065.66,
+      "revenue_share_pct": 0.98,
+      "customers": 302
+    },
+    "Promising": {
+      "revenue_gbp": 74612.21,
+      "revenue_share_pct": 0.94,
+      "customers": 102
+    }
+  },
+  "top_segment": {
+    "name": "Champions",
+    "revenue_gbp": 3565786.63,
+    "revenue_share_pct": 44.85,
+    "customer_count": 511
+  },
+  "cohort": {
+    "best_cohort_month": "2010-12",
+    "best_m1_retention_pct": 36.61,
+    "worst_m1_retention_pct": 0.0,
+    "n_cohorts": 12
+  },
+  "ltv": {
+    "model": "HistGradientBoostingClassifier",
+    "target": "top quintile of customer net Monetary",
+    "target_threshold_gbp": 1920.09,
+    "cv": "5-fold stratified, random_state=42",
+    "roc_auc_mean": 0.9975,
+    "roc_auc_std": 0.0007,
+    "precision": 0.9555,
+    "recall": 0.9533,
+    "f1": 0.9544,
+    "confusion_matrix": [
+      [
+        3385,
+        38
+      ],
+      [
+        40,
+        816
+      ]
+    ],
+    "top_3_features": [
+      {
+        "name": "Frequency",
+        "importance": 0.21885
+      },
+      {
+        "name": "AvgBasketSize",
+        "importance": 0.20149
+      },
+      {
+        "name": "AvgUnitPrice",
+        "importance": 0.04186
+      }
+    ],
+    "top_2_non_rfm_features": [
+      "AvgBasketSize",
+      "AvgUnitPrice"
+    ]
+  },
+  "retention_targets": [
+    {
+      "segment": "At Risk",
+      "customers": 164,
+      "revenue_gbp": 370280.08,
+      "revenue_share_pct": 4.66
+    },
+    {
+      "segment": "Cannot Lose Them",
+      "customers": 38,
+      "revenue_gbp": 93819.71,
+      "revenue_share_pct": 1.18
+    },
+    {
+      "segment": "About to Sleep",
+      "customers": 139,
+      "revenue_gbp": 109668.55,
+      "revenue_share_pct": 1.38
+    }
+  ]
+}
