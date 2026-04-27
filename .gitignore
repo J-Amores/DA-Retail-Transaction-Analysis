@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset (re-downloadable from UCI; ~23 MB — see README)
+data/raw/Online Retail.xlsx
+data/Online Retail.xlsx
+*.xlsx
+
+# Claude Code
+.claude/
+.claude.json
+.claude-code/
+.mcp.json
+claude.md
+CLAUDE.md
+CLAUDE.md.template
+docs/superpowers/
