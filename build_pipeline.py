@@ -790,8 +790,9 @@ top_seg_name = seg_summary.index[0]
 top_seg_row = seg_summary.iloc[0]
 
 # Apply the same mask used in E4 so unobserved cohort/period cells are excluded
-retention_observed = retention.copy().astype(float)
-retention_observed.values[mask] = np.nan
+retention_observed = retention.astype(float).mask(
+    pd.DataFrame(mask, index=retention.index, columns=retention.columns)
+)
 m1_obs = retention_observed[1].dropna() if 1 in retention_observed.columns else pd.Series(dtype=float)
 best_cohort = m1_obs.idxmax() if not m1_obs.empty else None
 best_m1 = float(m1_obs.max()) if not m1_obs.empty else None

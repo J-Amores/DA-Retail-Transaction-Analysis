@@ -114,7 +114,8 @@
   "cohort": {
     "best_cohort_month": "2010-12",
     "best_m1_retention_pct": 36.61,
-    "worst_m1_retention_pct": 0.0,
+    "worst_cohort_month": "2011-03",
+    "worst_m1_retention_pct": 15.04,
     "n_cohorts": 12
   },
   "ltv": {
