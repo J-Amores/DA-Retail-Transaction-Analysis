@@ -26,7 +26,7 @@ from sklearn.metrics import (
 warnings.filterwarnings("ignore")
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-BASE = Path(__file__).resolve().parent
+BASE = Path(__file__).resolve().parent.parent  # scripts/ → project root
 RAW = BASE / "data" / "raw" / "Online Retail.xlsx"
 PROC = BASE / "data" / "processed"
 CHARTS = BASE / "charts"

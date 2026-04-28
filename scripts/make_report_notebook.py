@@ -13,8 +13,8 @@ Run from the project root:
 from pathlib import Path
 import nbformat as nbf
 
-ROOT = Path(__file__).resolve().parent
-OUT = ROOT / "final-report.ipynb"
+ROOT = Path(__file__).resolve().parent.parent  # scripts/ → project root
+OUT = ROOT / "notebooks" / "final-report.ipynb"
 
 
 def md(text: str) -> dict:
@@ -57,6 +57,8 @@ from IPython.display import Image, display, Markdown
 import pandas as pd
 
 ROOT = Path.cwd()
+if ROOT.name == "notebooks":
+    ROOT = ROOT.parent  # step up to project root
 SUMMARY = json.loads((ROOT / "data" / "processed" / "summary.json").read_text())
 SEGMAP = json.loads((ROOT / "data" / "processed" / "rfm_segment_map.json").read_text())
 CHARTS = ROOT / "charts"

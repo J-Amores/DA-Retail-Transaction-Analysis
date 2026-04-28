@@ -12,9 +12,9 @@ Run from the project root:
 from pathlib import Path
 import nbformat as nbf
 
-ROOT = Path(__file__).resolve().parent
-SRC = ROOT / "build_pipeline.py"
-OUT = ROOT / "analysis.ipynb"
+ROOT = Path(__file__).resolve().parent.parent  # scripts/ → project root
+SRC = ROOT / "scripts" / "build_pipeline.py"
+OUT = ROOT / "notebooks" / "analysis.ipynb"
 
 src_lines = SRC.read_text().splitlines()
 
@@ -26,10 +26,13 @@ def chunk(start: int, end: int) -> str:
 
 
 # Patch the BASE-path resolution for the notebook context
-# (build_pipeline.py uses __file__, which doesn't exist in a notebook)
+# (build_pipeline.py uses __file__, which doesn't exist in a notebook;
+# the notebook lives in notebooks/, so step up one level if needed)
 SETUP = chunk(1, 98).replace(
-    "BASE = Path(__file__).resolve().parent",
-    'BASE = Path.cwd()',
+    "BASE = Path(__file__).resolve().parent.parent  # scripts/ → project root",
+    'BASE = Path.cwd()\n'
+    'if BASE.name == "notebooks":\n'
+    '    BASE = BASE.parent  # step up to project root',
 )
 
 

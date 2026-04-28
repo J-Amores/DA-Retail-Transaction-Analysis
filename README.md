@@ -1,6 +1,6 @@
 # Investigating Retail Data: Who Drives Revenue, and Who's Slipping Away?
 
-> **Status:** Planning complete; analysis in progress.
+> **Status:** Delivered. Live report: see `index.html` (also published via GitHub Pages).
 
 A portfolio data-analysis project on the UCI Online Retail dataset (~541K UK
 e-commerce transactions, Dec 2010 – Nov 2011), answering five business questions
@@ -15,11 +15,12 @@ LTV-driver model.
 4. Are newer customers staying with us as well as older ones?
 5. Which 3 segments should we target for retention campaigns?
 
-## Coming deliverables
+## Deliverables
 
-- `analysis.ipynb` — end-to-end EDA, cleaning, RFM / cohort / LTV computations.
-- `final-report.ipynb` — narrative write-up answering the five questions.
-- `index.html` — editorial HTML report (will be served via GitHub Pages).
+- `notebooks/analysis.ipynb` — end-to-end EDA, cleaning, RFM / cohort / LTV computations.
+- `notebooks/final-report.ipynb` — narrative write-up answering the five questions.
+- `index.html` — editorial HTML report (served via GitHub Pages).
+- `scripts/` — pipeline (`build_pipeline.py`) and notebook/HTML generators (`make_*.py`).
 
 ## Reproducing this analysis
 
@@ -33,7 +34,14 @@ LTV-driver model.
    source .venv/bin/activate
    pip install -r requirements.txt
    ```
-4. Open `analysis.ipynb` in Jupyter and run all cells, then `final-report.ipynb`.
+4. Run the analysis pipeline, then open the notebooks:
+   ```bash
+   python scripts/build_pipeline.py            # regenerates charts/, data/processed/
+   python scripts/make_notebook.py             # rebuilds notebooks/analysis.ipynb
+   python scripts/make_report_notebook.py      # rebuilds notebooks/final-report.ipynb
+   python scripts/make_index.py                # rebuilds index.html
+   ```
+   Or open `notebooks/analysis.ipynb` and `notebooks/final-report.ipynb` in Jupyter and run all cells.
 
 ## Dataset
 

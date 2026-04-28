@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investigating Retail Data: Who Drives Revenue, and Who's Slipping Away?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ═══════════════════════════════════════════════
+       EDITORIAL REPORT — DESIGN SYSTEM v2
+       Modern data visualization · Scroll animations
+       CSS-native charts · Animated counters
+       ═══════════════════════════════════════════════ */
+
+    /* --- Reset --- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* --- Tokens --- */
+    :root {
+      --bg:           #fafafa;
+      --bg-card:      #ffffff;
+      --bg-card-dark: #111111;
+      --text:         #171717;
+      --text-muted:   #737373;
+      --text-light:   #a3a3a3;
+      --border:       #e5e5e5;
+      --accent:       #171717;
+      --accent-pop:   #E07856;
+      --accent-green: #16a34a;
+      --accent-amber: #d97706;
+      --accent-red:   #dc2626;
+      --max:          960px;
+      --font-display: 'DM Sans', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+      --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="dark"] {
+      --bg:           #0a0a0a;
+      --bg-card:      #141414;
+      --bg-card-dark: #000000;
+      --text:         #fafafa;
+      --text-muted:   #a3a3a3;
+      --text-light:   #525252;
+      --border:       #262626;
+      --accent:       #fafafa;
+      --accent-pop:   #F4A788;
+      --accent-green: #4ade80;
+      --accent-amber: #fbbf24;
+      --accent-red:   #f87171;
+    }
+
+    /* --- Base --- */
+    html  { scroll-behavior: smooth; }
+    body  {
+      font-family: var(--font-display);
+      background: var(--bg); color: var(--text);
+      line-height: 1.75; font-weight: 400;
+    }
+
+    /* --- Layout --- */
+    .container { max-width: var(--max); margin: 0 auto; padding: 0 40px; }
+    @media (max-width: 600px) { .container { padding: 0 20px; } }
+
+
+    /* ── Scroll Reveal System ────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    /* Stagger children: add data-delay="1" through "5" */
+    .reveal[data-delay="1"] { transition-delay: 0.08s; }
+    .reveal[data-delay="2"] { transition-delay: 0.16s; }
+    .reveal[data-delay="3"] { transition-delay: 0.24s; }
+    .reveal[data-delay="4"] { transition-delay: 0.32s; }
+    .reveal[data-delay="5"] { transition-delay: 0.40s; }
+
+    /* Reduced motion: skip animations */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+    }
+
+
+    /* ── Navbar ──────────────────────────────────── */
+    nav {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      padding: 0 40px;
+      display: flex; align-items: center; gap: 0;
+      overflow-x: auto;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+    }
+    nav a {
+      font-family: var(--font-mono);
+      font-size: 0.7rem; color: var(--text-muted); text-decoration: none;
+      padding: 13px 16px; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out);
+    }
+    nav a:hover { color: var(--text); border-bottom-color: var(--text); }
+    .theme-toggle {
+      background: none; border: 1px solid var(--border);
+      font-size: 0.85rem; padding: 0.2rem 0.5rem;
+      cursor: pointer; color: var(--text);
+      font-family: var(--font-mono);
+      margin-left: auto; flex-shrink: 0;
+      border-radius: 4px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .theme-toggle:hover { border-color: var(--text); background: var(--bg-card); }
+
+
+    /* ── Cover ───────────────────────────────────── */
+    #cover { background: var(--bg); padding: 80px 40px 64px; border-bottom: 1px solid var(--border); }
+    .cover-inner { max-width: var(--max); margin: 0 auto; }
+    .cover-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem; letter-spacing: 0.15em;
+      color: var(--text-muted); text-transform: uppercase; margin-bottom: 16px;
+    }
+    .cover-divider { border: none; border-top: 1px solid var(--border); margin-bottom: 2rem; }
+    #cover h1 {
+      font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 300;
+      letter-spacing: -0.03em; line-height: 1.08;
+      color: var(--text); max-width: 780px; margin-bottom: 28px;
+    }
+    .cover-intro { max-width: 680px; }
+    .cover-intro p { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 10px; }
+    .cover-intro p strong { color: var(--text); }
+    .cover-callout {
+      border-left: 2px solid var(--accent-pop); background: none;
+      padding: 1rem 1.5rem; font-size: 0.8rem; color: var(--text-muted);
+      margin-top: 16px; line-height: 1.65;
+    }
+    .cover-callout strong { color: var(--text); }
+
+
+    /* ── KPI Strip ── Animated counters ──────────── */
+    .kpi-strip {
+      display: flex;
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      margin: 2rem 0 0;
+    }
+    .kpi-item {
+      flex: 1; padding: 1.5rem 2rem;
+      border-right: 1px solid var(--border);
+      transition: background 0.3s var(--ease-out);
+    }
+    .kpi-item:last-child { border-right: none; }
+    .kpi-item:hover { background: var(--bg-card); }
+    .kpi-label {
+      display: block; font-family: var(--font-mono);
+      font-size: 0.6rem; letter-spacing: 0.12em;
+      color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;
+    }
+    .kpi-val {
+      display: block; font-family: var(--font-mono);
+      font-size: 1.8rem; font-weight: 500;
+      color: var(--text); line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-note {
+      display: block; font-size: 0.7rem;
+      color: var(--text-muted); margin-top: 0.35rem;
+    }
+    /* KPI trend indicator */
+    .kpi-trend {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-family: var(--font-mono); font-size: 0.65rem;
+      margin-top: 0.25rem; font-weight: 500;
+    }
+    .kpi-trend.up { color: var(--accent-green); }
+    .kpi-trend.down { color: var(--accent-red); }
+    .kpi-trend.flat { color: var(--text-muted); }
+    @media (max-width: 700px) {
+      .kpi-strip { display: grid; grid-template-columns: repeat(2, 1fr); }
+      .kpi-item  { border-right: none !important; border-bottom: 1px solid var(--border); }
+      .kpi-item:nth-child(odd) { border-right: 1px solid var(--border) !important; }
+    }
+
+
+    /* ── Sections ────────────────────────────────── */
+    .section { padding: 72px 0; border-bottom: 1px solid var(--border); }
+    .section:last-of-type { border-bottom: none; }
+    .section.alt { background: var(--bg-card); }
+    .section-num {
+      font-family: var(--font-mono);
+      font-size: 0.6rem; font-weight: 600; letter-spacing: 0.15em;
+      color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px;
+    }
+    .section h2 {
+      font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 300;
+      color: var(--text); line-height: 1.2; max-width: 760px; margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+    .section-deck {
+      font-family: var(--font-mono);
+      font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.04em;
+      margin-bottom: 28px; padding-bottom: 20px;
+      border-bottom: 1px solid var(--border); max-width: 760px;
+    }
+    p.body { font-size: 0.875rem; max-width: 760px; margin-bottom: 18px; color: var(--text); }
+
+
+    /* ── Pull Quote ──────────────────────────────── */
+    .pull-quote {
+      border-left: 2px solid var(--accent-pop); background: none;
+      padding: 0.75rem 1.25rem; margin: 28px 0; max-width: 680px;
+    }
+    .pull-quote p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+    .pull-quote p strong { color: var(--text); }
+
+
+    /* ── Chart ───────────────────────────────────── */
+    .chart-wrap {
+      margin: 32px 0; border: 1px solid var(--border);
+      background: var(--bg-card); border-radius: 6px;
+      overflow: hidden;
+      transition: box-shadow 0.3s var(--ease-out);
+    }
+    .chart-wrap:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    [data-theme="dark"] .chart-wrap:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+    .chart-wrap img { width: 100%; display: block; }
+    .chart-caption {
+      font-family: var(--font-mono);
+      font-size: 0.6rem; letter-spacing: 0.06em; color: var(--text-muted);
+      padding: 0.6rem 1rem; border-top: 1px solid var(--border);
+    }
+    .chart-caption strong { color: var(--text); }
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 32px 0; }
+    .chart-row .chart-wrap { margin: 0; }
+    @media (max-width: 700px) { .chart-row { grid-template-columns: 1fr; } }
+
+
+    /* ═══════════════════════════════════════════════
+       CSS-NATIVE DATA VISUALIZATION COMPONENTS
+       Inline charts that don't need images
+       ═══════════════════════════════════════════════ */
+
+    /* ── Inline Bar Chart ────────────────────────── */
+    .bar-chart { display: flex; flex-direction: column; gap: 12px; margin: 28px 0; max-width: 680px; }
+    .bar-item { display: grid; grid-template-columns: 140px 1fr 60px; gap: 12px; align-items: center; }
+    .bar-label {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .bar-track { height: 24px; background: var(--border); border-radius: 3px; overflow: hidden; position: relative; }
+    .bar-fill {
+      height: 100%; border-radius: 3px;
+      background: var(--accent-pop);
+      transition: width 1s var(--ease-out);
+      width: 0;
+    }
+    .bar-fill.animated { width: var(--w); }
+    .bar-fill.green { background: var(--accent-green); }
+    .bar-fill.amber { background: var(--accent-amber); }
+    .bar-fill.red   { background: var(--accent-red); }
+    .bar-value {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text-muted); text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    @media (max-width: 600px) {
+      .bar-item { grid-template-columns: 100px 1fr 50px; }
+    }
+
+    /* ── Donut Chart (conic-gradient) ────────────── */
+    .donut-chart {
+      display: flex; align-items: center; gap: 28px;
+      margin: 28px 0; max-width: 400px;
+    }
+    .donut-ring {
+      width: 120px; height: 120px; border-radius: 50%; flex-shrink: 0;
+      background: conic-gradient(
+        var(--accent-pop) 0deg var(--donut-end, 0deg),
+        var(--border) var(--donut-end, 0deg) 360deg
+      );
+      -webkit-mask: radial-gradient(circle, transparent 42px, #000 43px);
+      mask: radial-gradient(circle, transparent 42px, #000 43px);
+      transition: --donut-end 1s var(--ease-out);
+      position: relative;
+    }
+    .donut-center {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 1.1rem; font-weight: 600; color: var(--text);
+    }
+    .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+    .donut-legend-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; color: var(--text-muted);
+    }
+    .donut-swatch {
+      width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── Sparkline (CSS mini bar chart) ──────────── */
+    .sparkline {
+      display: inline-flex; align-items: flex-end; gap: 2px;
+      height: 28px; vertical-align: middle;
+    }
+    .sparkline .spark-bar {
+      width: 4px; border-radius: 1px;
+      background: var(--accent-pop);
+      transition: height 0.6s var(--ease-out);
+    }
+
+    /* ── Comparison Meter ────────────────────────── */
+    .meter-row { display: flex; flex-direction: column; gap: 14px; margin: 28px 0; max-width: 680px; }
+    .meter-item { display: flex; flex-direction: column; gap: 4px; }
+    .meter-header { display: flex; justify-content: space-between; align-items: baseline; }
+    .meter-label { font-size: 0.75rem; color: var(--text); }
+    .meter-value { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+    .meter-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .meter-fill {
+      height: 100%; border-radius: 3px; background: var(--accent-pop);
+      transition: width 1s var(--ease-out); width: 0;
+    }
+    .meter-fill.animated { width: var(--w); }
+
+
+    /* ── Bento Stat Grid ── (21st.dev inspired) ─── */
+    .bento-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin: 28px 0;
+    }
+    .bento-stat {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 20px;
+      transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+    }
+    .bento-stat:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    [data-theme="dark"] .bento-stat:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .bento-stat .stat-eyebrow {
+      font-family: var(--font-mono); font-size: 0.55rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-light); margin-bottom: 8px;
+    }
+    .bento-stat .stat-number {
+      font-family: var(--font-mono); font-size: 1.6rem;
+      font-weight: 600; color: var(--text); line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .bento-stat .stat-context {
+      font-size: 0.7rem; color: var(--text-muted); margin-top: 6px;
+    }
+    /* Span 2 columns for a featured stat */
+    .bento-stat.wide { grid-column: span 2; }
+    @media (max-width: 700px) {
+      .bento-stats { grid-template-columns: 1fr 1fr; }
+      .bento-stat.wide { grid-column: span 2; }
+    }
+    @media (max-width: 480px) {
+      .bento-stats { grid-template-columns: 1fr; }
+      .bento-stat.wide { grid-column: span 1; }
+    }
+
+
+    /* ── Table ───────────────────────────────────── */
+    .tbl-wrap { overflow-x: auto; margin: 28px 0; border-radius: 6px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    th {
+      font-family: var(--font-mono);
+      background: var(--bg); color: var(--text); padding: 10px 12px;
+      text-align: left; font-weight: 600; font-size: 0.6rem;
+      letter-spacing: 0.08em; border-bottom: 2px solid var(--text);
+      text-transform: uppercase;
+    }
+    td {
+      padding: 9px 12px; border-bottom: 1px solid var(--border);
+      color: var(--text); vertical-align: middle;
+      font-variant-numeric: tabular-nums;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: color-mix(in srgb, var(--accent-pop) 4%, transparent); }
+    td.hi  { color: var(--text); font-weight: 600; }
+    td.lo  { color: var(--text-muted); font-weight: 400; }
+    td.num { text-align: right; font-family: var(--font-mono); }
+    tr.highlight td { border-left: 2px solid var(--accent-pop); }
+    /* Inline cell bar — use style="--cell-w: 72%" */
+    td .cell-bar {
+      display: block; height: 4px; border-radius: 2px;
+      background: var(--accent-pop); margin-top: 4px;
+      width: var(--cell-w, 0%);
+      transition: width 0.8s var(--ease-out);
+    }
+
+
+    /* ── Stat Boxes ──────────────────────────────── */
+    .stat-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 28px 0; max-width: 600px; }
+    @media (max-width: 600px) { .stat-pair { grid-template-columns: 1fr; } }
+    .stat-box  {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-top: 2px solid var(--accent-pop); padding: 20px 18px;
+      border-radius: 0 0 6px 6px;
+      transition: transform 0.2s var(--ease-out);
+    }
+    .stat-box:hover { transform: translateY(-2px); }
+    .stat-val  {
+      font-family: var(--font-mono); font-size: 2rem; font-weight: 500;
+      color: var(--text); line-height: 1; margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-lbl  {
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.1em; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .stat-sub  { font-size: 0.7rem; color: var(--text-muted); }
+
+
+    /* ── Narrative Bridge ────────────────────────── */
+    .bridge {
+      font-size: 0.75rem; color: var(--text-muted);
+      margin-top: 32px; padding-top: 20px;
+      border-top: 1px solid var(--border); max-width: 680px;
+    }
+
+
+    /* ── Conclusion ──────────────────────────────── */
+    #conclusion { background: var(--bg-card-dark); padding: 72px 40px; }
+    .conclusion-inner { max-width: var(--max); margin: 0 auto; }
+    #conclusion .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.6rem; letter-spacing: 0.15em;
+      color: #fafafa; text-transform: uppercase; margin-bottom: 20px;
+    }
+    #conclusion h2 {
+      font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 300;
+      color: #fafafa; margin-bottom: 36px; line-height: 1.2;
+      max-width: 700px; letter-spacing: -0.01em;
+    }
+    .findings-list { display: flex; flex-direction: column; gap: 20px; max-width: 720px; }
+    .finding-item  { display: flex; gap: 20px; align-items: flex-start; }
+    .finding-num   {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: #525252; font-weight: 600; flex-shrink: 0; padding-top: 2px;
+    }
+    .finding-text  { font-size: 0.8rem; color: #a3a3a3; line-height: 1.6; }
+    .finding-text strong { color: #fafafa; }
+    .report-links {
+      margin-top: 36px; padding-top: 20px; border-top: 1px solid #262626;
+      font-family: var(--font-mono); font-size: 0.65rem; color: #525252;
+    }
+    .report-links a { color: #a3a3a3; }
+    .report-links a:hover { color: #fafafa; }
+
+
+    /* ── Data Notes ──────────────────────────────── */
+    #notes { padding: 36px 0; }
+    .notes-toggle {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      color: var(--text-muted); cursor: pointer;
+      transition: color 0.15s;
+    }
+    .notes-toggle:hover { color: var(--text); }
+    .notes-content { margin-top: 16px; max-width: 680px; }
+    .notes-content dt {
+      font-family: var(--font-mono); font-size: 0.7rem;
+      font-weight: 600; color: var(--text); margin-top: 12px;
+    }
+    .notes-content dd { font-size: 0.75rem; color: var(--text-muted); margin-left: 0; margin-top: 2px; }
+
+
+    /* ── Footer ──────────────────────────────────── */
+    footer {
+      background: var(--bg-card-dark); color: #525252;
+      font-family: var(--font-mono); font-size: 0.6rem;
+      letter-spacing: 0.06em; padding: 28px 40px; text-align: center;
+    }
+
+
+
+    /* ── Learnings list (3 bullets per section) ─── */
+    .learnings { margin: 28px 0 8px; max-width: 760px; padding-left: 0; list-style: none; }
+    .learnings li {
+      position: relative; padding: 10px 0 10px 28px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem; color: var(--text); line-height: 1.6;
+    }
+    .learnings li:last-child { border-bottom: 1px solid var(--border); }
+    .learnings li::before {
+      content: ""; position: absolute; left: 0; top: 18px;
+      width: 14px; height: 2px; background: var(--accent-pop);
+    }
+    .learnings li strong { font-weight: 600; color: var(--text); }
+    .learnings li .lbl {
+      display: inline-block; font-family: var(--font-mono);
+      font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent-pop); margin-right: 8px; vertical-align: 0.05em;
+    }
+
+    /* ── Progress Bar (reading progress) ─────────── */
+    .reading-progress {
+      position: fixed; top: 0; left: 0; z-index: 200;
+      width: 0; height: 2px;
+      background: var(--accent-pop);
+      transition: width 0.1s linear;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="reading-progress" id="reading-progress"></div>
+
+
+<!-- ══ NAVBAR ════════════════════════════════════════════════════════════════
+     One <a> per section. Keep labels short (2–3 words).
+     Theme toggle is always last.
+     ══════════════════════════════════════════════════════════════════════ -->
+<nav>
+  <a href="#cover">Cover</a>
+  <a href="#revenue">Revenue</a>
+  <a href="#segments">Segments</a>
+  <a href="#drivers">Drivers</a>
+  <a href="#cohorts">Cohorts</a>
+  <a href="#targets">Targets</a>
+  <a href="#conclusion">Conclusion</a>
+  <a href="#notes">Notes</a>
+  <button class="theme-toggle" onclick="toggleTheme()">◐</button>
+</nav>
+
+
+<!-- ══ COVER ═════════════════════════════════════════════════════════════════ -->
+<section id="cover">
+  <div class="cover-inner">
+    <div class="cover-eyebrow">ONLINE-RETAIL · 12-MONTH SEGMENTATION & RETENTION READ · DEC 2010 – NOV 2011</div>
+    <hr class="cover-divider" />
+    <h1 class="reveal">Two segments drive 71&#37; of revenue &mdash; and newer cohorts are slipping away faster than they used to.</h1>
+    <div class="cover-intro reveal" data-delay="1">
+      <p>This report reads the UCI Online Retail dataset &mdash; <strong>~541,000 transactions from a UK gifts-and-homewares retailer over 12 months</strong> &mdash; and asks five blunt questions about who is paying the bills, who is leaving, and where the next pound of marketing spend should go.</p>
+      <p>The headline read is healthy: <strong>&pound;9.32M of revenue across 4,330 customers</strong>, with two-thirds of customers placing more than one order. The structural read is more interesting: revenue is heavily concentrated in two top segments, and the cohorts acquired after the first three months of 2011 retain at less than half the rate of the original cohort.</p>
+      <div class="cover-callout">
+        <strong>The central finding.</strong> <em>Champions</em> and <em>Loyal Customers</em> &mdash; <strong>1,282 customers, 30&#37; of the base &mdash; account for 71&#37; of revenue</strong>. Meanwhile, month-1 retention has slipped from <strong>36.6&#37; in the December 2010 cohort to 15.0&#37; by March 2011</strong>, and never recovers. The highest-leverage move is targeted retention spend on the 341 customers in <em>At Risk</em>, <em>Cannot Lose Them</em>, and <em>About to Sleep</em> &mdash; a small pool, but &pound;574k of revenue at stake.
+      </div>
+    </div>
+    <div class="kpi-strip reveal" data-delay="2">
+      <div class="kpi-item">
+        <span class="kpi-label">Total revenue (12 mo)</span>
+        <span class="kpi-val" data-count-to="9.32">&pound;9.32M</span>
+        <span class="kpi-note">All sales, Dec 2010 &ndash; Nov 2011</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">Active customers</span>
+        <span class="kpi-val" data-count-to="4330">4,330</span>
+        <span class="kpi-note">Distinct CustomerIDs</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">Repeat-purchase rate</span>
+        <span class="kpi-val" data-count-to="64.4">64.4&#37;</span>
+        <span class="kpi-note">2,756 customers with &ge; 2 orders</span>
+      </div>
+      <div class="kpi-item">
+        <span class="kpi-label">Top-segment revenue share</span>
+        <span class="kpi-val" data-count-to="44.85">44.9&#37;</span>
+        <span class="kpi-note">Champions &mdash; 511 customers</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section" id="revenue">
+  <div class="container">
+    <div class="section-num reveal">01 &nbsp;&middot;&nbsp; Revenue &amp; Reach</div>
+    <h2 class="reveal" data-delay="1">What is total revenue, AOV, and repeat purchase rate?</h2>
+    <div class="section-deck reveal" data-delay="2">Sizing the box: how big is the business, what does an order look like, and how many customers come back?</div>
+
+    <p class="body reveal">The first read on the business is unusually strong on stickiness. The retailer turned over &pound;9.32M across 12 months on 4,330 distinct customers spread across 38 countries &mdash; meaningful scale for a single-channel gifts-and-homewares operator.</p>
+    <p class="body reveal">Order shape and repeat behaviour both signal a B2B-leaning customer base: an AOV of <strong>&pound;447</strong> per invoice (well above a typical consumer e-commerce basket) and a <strong>64.4&#37; repeat-purchase rate</strong>. Together those numbers say "the customers we already have matter more than new acquisition" &mdash; and the next section makes that case quantitatively.</p>
+
+    <div class="chart-wrap reveal">
+      <img src="charts/E1_q1_size_kpis.png" alt="Headline KPIs: total revenue, customers, AOV, and repeat-purchase rate" />
+      <div class="chart-caption"><strong>Headline KPIs</strong> &nbsp;|&nbsp; Total revenue, active customers, AOV, and repeat-purchase rate, Dec 2010 &ndash; Nov 2011.</div>
+    </div>
+
+    <ul class="learnings reveal">
+      <li><span class="lbl">Size</span> &pound;9.32M turnover across <strong>4,330 distinct customers</strong> in 38 countries &mdash; meaningful scale for a single-channel gifts retailer.</li>
+      <li><span class="lbl">Order shape</span> AOV of <strong>&pound;447</strong> per invoice is well above a typical consumer basket &mdash; consistent with a B2B-leaning order book.</li>
+      <li><span class="lbl">Repeat behaviour</span> <strong>64.4&#37; of customers (2,756 of 4,330) placed two or more orders</strong> &mdash; unusually strong stickiness, and the reason segment concentration is the next question.</li>
+    </ul>
+
+    <div class="pull-quote reveal">
+      <p>Two-thirds of customers come back. <strong>The next question is whether those repeat customers are evenly distributed &mdash; or whether a small group is doing most of the work.</strong></p>
+    </div>
+    <div class="bridge reveal">Next: which customer segments actually contribute the revenue.</div>
+  </div>
+</section>
+
+<section class="section alt" id="segments">
+  <div class="container">
+    <div class="section-num reveal">02 &nbsp;&middot;&nbsp; Segment Concentration</div>
+    <h2 class="reveal" data-delay="1">Which customer segments contribute the most revenue?</h2>
+    <div class="section-deck reveal" data-delay="2">Splitting customers into 11 named segments by their recency, frequency, and spend &mdash; then asking how revenue is distributed.</div>
+
+    <p class="body reveal">Stickiness is fine if the revenue is broadly distributed; concentration is fine if the customer base is healthy. With 11 named segments derived from quintile-binned recency, frequency, and spend scores (the standard Putler grid), the picture is sharply top-heavy.</p>
+    <p class="body reveal"><strong>Champions</strong> &mdash; just 511 customers, about 12&#37; of the base &mdash; contribute 44.9&#37; of revenue. Add <strong>Loyal Customers</strong> (771 customers) and the top two segments together carry <strong>71&#37; of all revenue from 30&#37; of the base</strong>. That is a textbook Pareto and the structural fact that drives every recommendation in this report.</p>
+
+    <div class="chart-row">
+      <div class="chart-wrap reveal">
+        <img src="charts/E2_q2_segment_revenue.png" alt="Revenue by segment" />
+        <div class="chart-caption"><strong>Revenue by segment</strong> &nbsp;|&nbsp; Top three highlighted in coral. Champions alone = 44.9&#37;.</div>
+      </div>
+      <div class="chart-wrap reveal" data-delay="1">
+        <img src="charts/S4_segment_customer_count.png" alt="Customers per segment" />
+        <div class="chart-caption"><strong>Customer count by segment</strong> &nbsp;|&nbsp; Note the inverted shape &mdash; the largest segment by count (Lost) is small by share-of-revenue per head.</div>
+      </div>
+    </div>
+
+    <p class="body reveal" style="margin-top:32px"><strong>Top six segments by share of revenue</strong> &mdash; rendered natively for fast comparison:</p>
+    <div class="bar-chart reveal">
+      <div class="bar-item">
+        <span class="bar-label">Champions</span>
+        <div class="bar-track"><div class="bar-fill" style="--w: 100.0%"></div></div>
+        <span class="bar-value">44.9%</span>
+      </div>
+      <div class="bar-item">
+        <span class="bar-label">Loyal Customers</span>
+        <div class="bar-track"><div class="bar-fill" style="--w: 58.5%"></div></div>
+        <span class="bar-value">26.2%</span>
+      </div>
+      <div class="bar-item">
+        <span class="bar-label">Lost</span>
+        <div class="bar-track"><div class="bar-fill" style="--w: 35.4%"></div></div>
+        <span class="bar-value">15.9%</span>
+      </div>
+      <div class="bar-item">
+        <span class="bar-label">At Risk</span>
+        <div class="bar-track"><div class="bar-fill amber" style="--w: 10.4%"></div></div>
+        <span class="bar-value">4.7%</span>
+      </div>
+      <div class="bar-item">
+        <span class="bar-label">Hibernating</span>
+        <div class="bar-track"><div class="bar-fill amber" style="--w: 6.5%"></div></div>
+        <span class="bar-value">2.9%</span>
+      </div>
+      <div class="bar-item">
+        <span class="bar-label">About to Sleep</span>
+        <div class="bar-track"><div class="bar-fill amber" style="--w: 3.1%"></div></div>
+        <span class="bar-value">1.4%</span>
+      </div>
+    </div>
+
+    <ul class="learnings reveal">
+      <li><span class="lbl">Champions dominate</span> A single segment &mdash; <strong>Champions, 511 customers &mdash; contributes &pound;3.57M or 44.9&#37; of revenue</strong>. Roughly 12&#37; of the base producing close to half the revenue.</li>
+      <li><span class="lbl">Top two carry the business</span> Adding <strong>Loyal Customers (771 customers, &pound;2.09M, 26.2&#37;)</strong> brings the top two segments to <strong>71&#37; of revenue from 1,282 customers (30&#37; of the base)</strong>.</li>
+      <li><span class="lbl">A long, dormant tail</span> <strong>Lost is the largest segment by count (1,042 customers)</strong> but holds only 15.9&#37; of revenue &mdash; these are former buyers, not non-buyers, which is the reservoir the retention question targets.</li>
+    </ul>
+
+    <div class="pull-quote reveal">
+      <p>30&#37; of customers carry 71&#37; of the revenue. <strong>Service quality for Champions and Loyal Customers is the load-bearing investment &mdash; not a "nice to have."</strong></p>
+    </div>
+    <div class="bridge reveal">Next: what behavioural features actually predict who becomes a high-value customer in the first place.</div>
+  </div>
+</section>
+
+<section class="section" id="drivers">
+  <div class="container">
+    <div class="section-num reveal">03 &nbsp;&middot;&nbsp; Drivers of High Value</div>
+    <h2 class="reveal" data-delay="1">Which factors predict high lifetime value?</h2>
+    <div class="section-deck reveal" data-delay="2">Going beyond "Champions are valuable" &mdash; using a model to ask what actually moves a customer into the top tier.</div>
+
+    <p class="body reveal">Knowing that Champions are valuable does not tell us how to make more of them. To get at that, we trained a model to predict whether a customer falls in the <strong>top quintile of net spend</strong> from their behavioural features alone &mdash; recency, frequency, tenure, average basket size, average unit price, distinct product count, geography, and cancellation rate.</p>
+    <p class="body reveal">Frequency is unsurprisingly the headline driver. The interesting story is what comes next: <strong>average basket size</strong> is a near-equal second &mdash; meaningfully more important than average unit price. The implication for marketing is the cleaner of two routes: bundles and free-shipping thresholds (which grow basket size) beat premium-SKU pushes (which grow unit price) for converting customers into the top tier.</p>
+
+    <div class="chart-wrap reveal">
+      <img src="charts/E3_q3_ltv_feature_importance.png" alt="Feature importance for predicting high-value customers" />
+      <div class="chart-caption"><strong>Feature importance &mdash; what predicts top-quintile spend</strong> &nbsp;|&nbsp; Coral = behavioural / customer features (the actionable signal). Navy = recency &amp; frequency.</div>
+    </div>
+
+    <ul class="learnings reveal">
+      <li><span class="lbl">Frequency</span> Purchase frequency is the strongest driver (importance &asymp; <strong>0.219</strong>). Expected, but useful: frequency can be moved with lifecycle programmes.</li>
+      <li><span class="lbl">Basket size beats unit price</span> Average basket size is a near-equal second (<strong>0.201</strong>); average unit price is a distant third (<strong>0.042</strong>). Push <strong>bundles and free-shipping thresholds</strong>, not premium SKUs.</li>
+      <li><span class="lbl">Clean separation</span> The model flags top-quintile customers with <strong>95.6&#37; precision and 95.3&#37; recall</strong> &mdash; we can identify likely-high-value customers from behaviour alone, well before a full year of spend accumulates.</li>
+    </ul>
+
+    <div class="pull-quote reveal">
+      <p>Beyond &quot;they buy more often,&quot; the strongest behavioural lever is <strong>basket size, not price point</strong>. Bundles, multi-pack offers, and free-shipping thresholds are the cleaner play than pushing premium SKUs.</p>
+    </div>
+    <div class="bridge reveal">Next: a check on whether the customer base is being topped up at the same quality.</div>
+  </div>
+</section>
+
+<section class="section alt" id="cohorts">
+  <div class="container">
+    <div class="section-num reveal">04 &nbsp;&middot;&nbsp; Cohort Health</div>
+    <h2 class="reveal" data-delay="1">Are newer customers staying with us as well as older ones?</h2>
+    <div class="section-deck reveal" data-delay="2">Concentration is fine if the funnel keeps refilling at the same quality &mdash; and dangerous if it doesn't. Cohort retention is the test.</div>
+
+    <p class="body reveal">Grouping every customer by the month of their first purchase, then tracking what share of each cohort is still buying in each subsequent month, gives us a clean read on whether acquisition is delivering similar-quality customers across the year. Unobserved cells (e.g. month +11 for the November 2011 cohort) are masked in grey to avoid the false-trend pitfall.</p>
+    <p class="body reveal">The picture is uncomfortable. The first cohort (December 2010) retains <strong>36.6&#37; of customers at month +1</strong>; the worst cohort (March 2011) drops to <strong>15.0&#37;</strong>, less than half. <strong>No later cohort recovers the December baseline.</strong> Topline revenue grew across the year, so the business looks healthy on the headline &mdash; but the cohort view shows a chunk of that growth is coming from less sticky customers, which is a warning rather than a victory.</p>
+
+    <div class="chart-row">
+      <div class="chart-wrap reveal">
+        <img src="charts/E4_q4_cohort_heatmap.png" alt="Cohort retention heatmap" />
+        <div class="chart-caption"><strong>Cohort retention heatmap</strong> &nbsp;|&nbsp; Each cell = % of cohort customers active in that month after acquisition. Grey cells are unobserved.</div>
+      </div>
+      <div class="chart-wrap reveal" data-delay="1">
+        <img src="charts/S1_cohort_retention_lines.png" alt="Retention at M+1, M+3, M+6 by cohort" />
+        <div class="chart-caption"><strong>Retention at M+1, M+3, M+6 by cohort</strong> &nbsp;|&nbsp; Same data, easier to read trend-wise. Cohorts clipped to observed windows.</div>
+      </div>
+    </div>
+
+    <ul class="learnings reveal">
+      <li><span class="lbl">First cohort is best</span> The <strong>December 2010 cohort retains 36.6&#37;</strong> of customers at month +1 &mdash; the highest of any cohort in the window.</li>
+      <li><span class="lbl">Newer cohorts retain worse</span> The <strong>March 2011 cohort drops to 15.0&#37;</strong> at month +1, less than half the December figure. Across <strong>all 12 cohorts</strong>, no later cohort recovers the baseline.</li>
+      <li><span class="lbl">Acquisition quality is degrading</span> Topline revenue rose across the year, but cohort retention shows it is being delivered by less sticky customers &mdash; a warning that aggregate growth hides.</li>
+    </ul>
+
+    <div class="pull-quote reveal">
+      <p>The funnel is filling, but with worse-quality customers. <strong>Acquisition quality, not just acquisition volume, deserves to be a tracked KPI &mdash; investigate the channel mix change between early and mid 2011.</strong></p>
+    </div>
+    <div class="bridge reveal">Next: where the highest-leverage retention spend goes today.</div>
+  </div>
+</section>
+
+<section class="section" id="targets">
+  <div class="container">
+    <div class="section-num reveal">05 &nbsp;&middot;&nbsp; Retention Targets</div>
+    <h2 class="reveal" data-delay="1">Which 3 segments should we target for retention campaigns?</h2>
+    <div class="section-deck reveal" data-delay="2">Pulling the segmentation and cohort views together: where is the highest-leverage retention spend?</div>
+
+    <p class="body reveal">The retention pool is small but valuable. Three segments &mdash; <em>At Risk</em> (high-value customers who have gone quiet), <em>Cannot Lose Them</em> (highest-value customers slipping away), and <em>About to Sleep</em> (early-warning tier) &mdash; together hold <strong>341 customers (8&#37; of the base) and &pound;574k of revenue (7.2&#37; of the total)</strong>. That is manageable for a focused campaign, not a mass-marketing exercise.</p>
+    <p class="body reveal">The three pools deserve different intensity. <strong>Cannot Lose Them</strong> is small (38 customers) but extraordinarily concentrated &mdash; an average of <strong>&pound;2,470 per customer</strong>, well above the &pound;1,920 high-value threshold &mdash; and warrants 1:1 outreach. <strong>At Risk</strong> is the volume play: 164 customers and &pound;370k of revenue, the most cost-effective bucket for a discount-led win-back. <strong>About to Sleep</strong> is the early-warning tier: a lighter-touch lifecycle nudge before they migrate into At Risk.</p>
+
+    <div class="chart-wrap reveal">
+      <img src="charts/E5_q5_target_segments.png" alt="Top 3 segments to target for retention" />
+      <div class="chart-caption"><strong>Three retention targets, three intensities</strong> &nbsp;|&nbsp; Customers, revenue, share of revenue, and a recommended action per segment.</div>
+    </div>
+
+    <ul class="learnings reveal">
+      <li><span class="lbl">Pool size</span> Three target segments hold <strong>341 customers (8&#37;) and &pound;574k of revenue (7.2&#37;)</strong> &mdash; small enough to act on with focus, not mass spend.</li>
+      <li><span class="lbl">VIP rescue first</span> <strong>Cannot Lose Them: only 38 customers but &pound;2,470 each on average</strong> &mdash; account-manager outreach and early-access offers, not bulk email.</li>
+      <li><span class="lbl">Volume play second</span> <strong>At Risk: 164 customers, &pound;370,280 in revenue (4.7&#37; of total)</strong> &mdash; the largest pool and the most cost-effective bucket for a discount-led win-back. About to Sleep gets a lighter lifecycle nudge.</li>
+    </ul>
+
+    <div class="pull-quote reveal">
+      <p>Three campaigns at three intensities for 341 customers carrying &pound;574k of revenue. <strong>The retention play sized correctly is a focused, near-term win &mdash; not a mass-marketing programme.</strong></p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ CONCLUSION ══════════════════════════════════════════════════════════ -->
+<section id="conclusion">
+  <div class="conclusion-inner">
+    <div class="eyebrow reveal">Conclusion &nbsp;&middot;&nbsp; Integrated Findings</div>
+    <h2 class="reveal" data-delay="1">Two segments carry the business; newer cohorts are slipping; a small retention pool is the highest-leverage move.</h2>
+    <div class="findings-list">
+      <div class="finding-item reveal" data-delay="1">
+        <div class="finding-num">01</div>
+        <div class="finding-text"><strong>Concentration is the structural fact.</strong> Champions and Loyal Customers, 1,282 customers (30&#37; of the base), account for 71&#37; of the &pound;9.32M annual revenue. Service quality, account management, and retention investment for these two segments is not optional &mdash; it is the load-bearing investment in the business.</div>
+      </div>
+      <div class="finding-item reveal" data-delay="2">
+        <div class="finding-num">02</div>
+        <div class="finding-text"><strong>Acquisition quality is degrading even while topline grows.</strong> Month-1 retention has slipped from 36.6&#37; in the December 2010 cohort to 15.0&#37; by March 2011, and never recovers. Track acquisition <em>quality</em> alongside acquisition <em>volume</em>; investigate the channel-mix shift between early and mid 2011.</div>
+      </div>
+      <div class="finding-item reveal" data-delay="3">
+        <div class="finding-num">03</div>
+        <div class="finding-text"><strong>The retention play is small, sharp, and ready.</strong> 341 customers in <em>At Risk</em>, <em>Cannot Lose Them</em>, and <em>About to Sleep</em> hold &pound;574k (7.2&#37;) of revenue. Run three campaigns at three intensities &mdash; 1:1 outreach for <em>Cannot Lose Them</em>, a discount-led win-back for <em>At Risk</em>, and a lifecycle nudge for <em>About to Sleep</em>.</div>
+      </div>
+    </div>
+    <div class="report-links reveal" data-delay="4">
+      <span>Source: <a href="https://archive.ics.uci.edu/dataset/352/online+retail">UCI Online Retail dataset</a> &nbsp;&middot;&nbsp; methodology in Data Notes below.</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══ DATA NOTES ══════════════════════════════════════════════════════════ -->
+<section id="notes">
+  <div class="container">
+    <p class="notes-toggle" onclick="
+      var c = document.getElementById('notes-content');
+      c.style.display = c.style.display === 'none' ? 'block' : 'none';
+      this.textContent = c.style.display === 'none'
+        ? '▶ Data Notes &amp; Methodology (click to expand)'
+        : '▼ Data Notes &amp; Methodology (click to collapse)';
+    ">▶ Data Notes &amp; Methodology (click to expand)</p>
+    <dl class="notes-content" id="notes-content" style="display:none;">
+
+      <dt>Source</dt>
+      <dd>UCI Online Retail dataset (~541k transactions from a UK gifts and homewares retailer, Dec 2010 &ndash; Dec 2011). All currency: <strong>GBP (&pound;)</strong>.</dd>
+
+      <dt>Cleaning policy (every rule logs a before/after row count)</dt>
+      <dd>
+        <ol style="margin: 8px 0 8px 18px; padding: 0;">
+          <li><strong>Trim period</strong> to 2010-12-01 &rarr; 2011-11-30 (12 full months) &mdash; the trailing 9 days of Dec 2011 corrupt cohort math. Drops 25,525 rows.</li>
+          <li><strong>Drop UnitPrice &le; 0</strong> &mdash; non-priced lines (manual adjustments) are not products. Drops 2,463 rows.</li>
+          <li><strong>Drop exact duplicates</strong> &mdash; 4,984 rows.</li>
+          <li><strong>Cancellations</strong> (InvoiceNo starting <code>C</code> or negative quantity): <em>kept</em> and netted against per-customer revenue rather than dropped wholesale. 8,892 rows kept.</li>
+          <li><strong>Drop missing CustomerID</strong> for customer-level analyses (RFM / LTV / cohorts) &mdash; ~25&#37; of rows. Total revenue still uses these rows; segments and cohorts do not.</li>
+          <li><strong>Non-product StockCodes</strong> (POST, M, DOT, BANK CHARGES, etc.) audited (2,614 rows) but not removed &mdash; no product-level analysis is in scope.</li>
+          <li><strong>Drop net-negative customers</strong> (51 customers whose net Monetary went &le; 0 after netting cancellations) &mdash; they would corrupt the LTV target.</li>
+        </ol>
+      </dd>
+
+      <dt>RFM segmentation</dt>
+      <dd>Snapshot date = <code>2011-12-01</code>. Recency, Frequency, and Monetary scored on independent quintile bins (1 = worst, 5 = best). The (R, F, M) score triple maps to one of 11 named segments via the standard Putler grid; the full mapping is exported as <code>data/processed/rfm_segment_map.json</code> for auditability.</dd>
+
+      <dt>Cohort retention</dt>
+      <dd>Cohort = year-month of first purchase. Period n = months elapsed. <code>Retention[c, n]</code> = share of cohort c with at least one invoice in period n. Cells outside the observed window are masked (grey) so the trend is not falsely depressed by the censor.</dd>
+
+      <dt>LTV-driver model</dt>
+      <dd>A gradient-boosted classifier (<code>sklearn.ensemble.HistGradient&shy;BoostingClassifier</code>) predicting whether a customer falls in the top quintile of net Monetary (threshold &pound;1,920). Reported with 5-fold stratified cross-validation: discrimination = 0.998, precision = 0.956, recall = 0.953. <strong>The discrimination figure is inflated by construction</strong> &mdash; the target is derived from M and one feature (Frequency) is structurally correlated with M. The body of the report intentionally focuses on the <em>non-RFM</em> features (basket size, unit price), which is the un-confounded signal.</dd>
+
+      <dt>Partial dependence on the top non-RFM features</dt>
+      <dd>
+        <div class="chart-row" style="margin-top:14px;">
+          <div class="chart-wrap">
+            <img src="charts/S2_ltv_pdp_top1.png" alt="Partial dependence on AvgBasketSize" />
+            <div class="chart-caption"><strong>Partial dependence &mdash; AvgBasketSize</strong> &nbsp;|&nbsp; Top non-RFM driver of top-quintile probability.</div>
+          </div>
+          <div class="chart-wrap">
+            <img src="charts/S3_ltv_pdp_top2.png" alt="Partial dependence on AvgUnitPrice" />
+            <div class="chart-caption"><strong>Partial dependence &mdash; AvgUnitPrice</strong> &nbsp;|&nbsp; Second non-RFM driver &mdash; flatter than basket size.</div>
+          </div>
+        </div>
+      </dd>
+
+      <dt>Caveats</dt>
+      <dd>
+        <ul style="margin: 8px 0 8px 18px; padding: 0;">
+          <li><strong>Cancellations are netted, not dropped.</strong> Per-customer Monetary is a net figure (purchases &minus; returns), matching how a CRM team would think about a customer's true contribution.</li>
+          <li><strong>Missing CustomerID is kept for total revenue, dropped for customer-level work.</strong> Total revenue (&pound;9.32M) is the upper bound; customer-attributed revenue (&pound;7.94M) feeds segments and cohorts.</li>
+          <li><strong>UK accounts for ~85&#37; of customers and ~91&#37; of rows.</strong> Non-UK is encoded as a binary feature in the LTV model rather than split into separate analyses.</li>
+          <li><strong>Currency is GBP throughout.</strong> Treating the figures as USD would understate revenue by ~25&#37; at 2011 rates.</li>
+        </ul>
+      </dd>
+
+    </dl>
+  </div>
+</section>
+
+
+<!-- ══ FOOTER ══════════════════════════════════════════════════════════════ -->
+<footer>
+  Online Retail RFM &amp; Cohorts &nbsp;&middot;&nbsp; Investigating Retail Data: Who Drives Revenue, and Who's Slipping Away? &nbsp;&middot;&nbsp; Dec 2010 &ndash; Nov 2011<br>
+  Source: <a href="https://archive.ics.uci.edu/dataset/352/online+retail" style="color:#a3a3a3">UCI Online Retail dataset</a> &nbsp;&middot;&nbsp; Methodology in Data Notes
+</footer>
+
+
+<script>
+  /* ── Theme toggle ────────────────────────────── */
+  function toggleTheme() {
+    const html = document.documentElement;
+    html.setAttribute('data-theme',
+      html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  }
+
+  /* ── Scroll reveal (IntersectionObserver) ────── */
+  (function() {
+    const reveals = document.querySelectorAll('.reveal');
+    if (!reveals.length) return;
+
+    const observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+
+          // Animate bar fills and meter fills when revealed
+          entry.target.querySelectorAll('.bar-fill, .meter-fill').forEach(function(el) {
+            el.classList.add('animated');
+          });
+
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    reveals.forEach(function(el) { observer.observe(el); });
+  })();
+
+  /* ── Animated counters ─────────────────────────
+       Add data-count-to="142" on .kpi-val elements.
+       The displayed text is the final formatted value.
+       The raw number drives the animation.
+       ─────────────────────────────────────────── */
+  (function() {
+    var counters = document.querySelectorAll('[data-count-to]');
+    if (!counters.length) return;
+
+    var observed = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        var finalText = el.textContent;
+        var raw = parseFloat(el.getAttribute('data-count-to'));
+        if (isNaN(raw)) return;
+        observed.unobserve(el);
+
+        var start = 0;
+        var duration = 1200;
+        var startTime = null;
+        var isPercent = finalText.includes('%');
+        var prefix = finalText.match(/^[^0-9]*/)[0] || '';
+        var suffix = finalText.match(/[^0-9.]*$/)[0] || '';
+        var decimals = (finalText.match(/\.(\d+)/) || [,''])[1].length;
+
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var progress = Math.min((ts - startTime) / duration, 1);
+          var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+          var current = start + (raw - start) * eased;
+
+          if (raw >= 1000 && decimals === 0) {
+            el.textContent = prefix + Math.round(current).toLocaleString() + suffix;
+          } else {
+            el.textContent = prefix + current.toFixed(decimals) + suffix;
+          }
+
+          if (progress < 1) requestAnimationFrame(step);
+          else el.textContent = finalText; // ensure exact final value
+        }
+        requestAnimationFrame(step);
+      });
+    }, { threshold: 0.3 });
+
+    counters.forEach(function(el) { observed.observe(el); });
+  })();
+
+  /* ── Reading progress bar ──────────────────── */
+  (function() {
+    var bar = document.getElementById('reading-progress');
+    if (!bar) return;
+    window.addEventListener('scroll', function() {
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      bar.style.width = (docHeight > 0 ? (scrollTop / docHeight) * 100 : 0) + '%';
+    }, { passive: true });
+  })();
+
+  /* ── Auto-animate bar-fills on page load (for non-reveal bars) ── */
+  (function() {
+    setTimeout(function() {
+      document.querySelectorAll('.bar-fill:not(.animated), .meter-fill:not(.animated)').forEach(function(el) {
+        if (el.closest('.reveal')) return; // let reveal observer handle these
+        el.classList.add('animated');
+      });
+    }, 300);
+  })();
+</script>
+
+</body>
+</html>
