@@ -185,8 +185,3 @@ Alternatively, open `notebooks/analysis.ipynb` and `notebooks/final-report.ipynb
 ## Conclusion
 
 This project demonstrates that a UK retailer's apparently healthy headline numbers (£9.32M revenue, 64% repeat rate) hide a sharp structural concentration: **30% of customers carry 71% of revenue**, and acquisition quality is degrading even while topline grows. The interpretable LTV-driver model identifies **average basket size** as the strongest behavioural lever beyond raw frequency, pointing to bundles and free-shipping thresholds as the cleaner growth play than premium-SKU pushes. The recommended near-term action is a focused, three-tier retention campaign on 341 customers carrying £574k of revenue — a small, sharp, ready-to-execute play rather than a mass-marketing programme.
-
-## Author
-
-- **John**
-- [GitHub](https://github.com/J-Amores)
