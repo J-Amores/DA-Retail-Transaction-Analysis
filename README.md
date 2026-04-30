@@ -11,7 +11,7 @@
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/)
 
-🔗 **[View the live report →](https://j-amores.github.io/DA-Retail-Transaction-Analysis/)**
+🔗 **[View the live report →](https://da-retail-transaction-analysis-25fa62.gitlab.io)**
 
 ## Overview
 
